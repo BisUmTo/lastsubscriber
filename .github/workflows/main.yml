@@ -8,23 +8,36 @@ on:
 
 jobs:
   build-and-deploy:
+    # Specifica l'ambiente da cui prendere i secrets.
     environment: github-pages
     runs-on: ubuntu-latest
     steps:
-      # 1. Scarica il codice del tuo repository (index.html, auth.html, style.css, etc.)
+      # 1. Scarica il codice del tuo repository
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      # 2. Crea il file config.js al volo usando i secrets del repository
+      # 2. Crea una cartella di build per i file da pubblicare
+      - name: Create Build Directory
+        run: mkdir ./build
+
+      # 3. Copia i file statici necessari nella cartella di build
+      - name: Copy Static Files to Build Directory
+        run: |
+          cp index.html ./build/
+          cp auth.html ./build/
+          cp style.css ./build/
+          # Se hai altri file (immagini, altri css), aggiungi qui i comandi 'cp'
+
+      # 4. Crea il file config.js direttamente dentro la cartella di build
       - name: Create config.js from Secrets
         run: |
-          echo "const CLIENT_ID = '${{ secrets.GOOGLE_CLIENT_ID }}';" > config.js
-          echo "const REDIRECT_URI = 'https:// ${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/auth.html';" >> config.js
-          echo "const SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';" >> config.js
+          echo "const CLIENT_ID = '${{ secrets.GOOGLE_CLIENT_ID }}';" > ./build/config.js
+          echo "const REDIRECT_URI = 'https:// ${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/auth.html';" >> ./build/config.js
+          echo "const SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';" >> ./build/config.js
 
-      # 3. Pubblica tutti i file (incluso il nuovo config.js) sul branch gh-pages
+      # 5. Pubblica solo il contenuto della cartella 'build'
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages # Il branch dove verranno pubblicati i file
-          folder: . # Pubblica l'intera cartella principale
+          folder: ./build # Pubblica dalla cartella 'build'
