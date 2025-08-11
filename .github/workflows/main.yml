@@ -6,38 +6,49 @@ on:
     branches:
       - main
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     # Specifica l'ambiente da cui prendere i secrets.
-    environment: github-pages
+    environment: 
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       # 1. Scarica il codice del tuo repository
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
-      # 2. Crea una cartella di build per i file da pubblicare
-      - name: Create Build Directory
-        run: mkdir ./build
-
-      # 3. Copia i file statici necessari nella cartella di build
-      - name: Copy Static Files to Build Directory
-        run: |
-          cp index.html ./build/
-          cp auth.html ./build/
-          cp style.css ./build/
-          # Se hai altri file (immagini, altri css), aggiungi qui i comandi 'cp'
-
-      # 4. Crea il file config.js direttamente dentro la cartella di build
+      # 2. Crea il file config.js direttamente dentro la cartella di build
       - name: Create config.js from Secrets
         run: |
-          echo "const CLIENT_ID = '${{ secrets.GOOGLE_CLIENT_ID }}';" > ./build/config.js
-          echo "const REDIRECT_URI = 'https:// ${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/auth.html';" >> ./build/config.js
-          echo "const SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';" >> ./build/config.js
+          echo "const CLIENT_ID = '${{ secrets.GOOGLE_CLIENT_ID }}';" > ./config.js
+          echo "const REDIRECT_URI = 'https:// ${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/auth.html';" >> ./config.js
+          echo "const SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';" >> ./config.js
+
+      # 3. Configura GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      
+      # 4. Carica il contenuto del repository come artefatto
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: '.'
 
       # 5. Pubblica solo il contenuto della cartella 'build'
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages # Il branch dove verranno pubblicati i file
-          folder: ./build # Pubblica dalla cartella 'build'
+        id: deployment
+        uses: actions/deploy-pages@v4
