@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ultimo Iscritto YouTube</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
+    <!-- Carica il file di configurazione prima dello script principale -->
+    <script src="config.js"></script>
+</head>
+<body>
+
+<div id="subscriber-info" style="display: none;">
+    <img id="subscriber-logo" src="" alt="Logo Iscritto">
+    <div id="subscriber-name"></div>
+</div>
+
+<div id="login-prompt">
+    <p>Autenticati per visualizzare l'ultimo iscritto.</p>
+    <button id="login-button" onclick="authenticate()">Login con Google</button>
+</div>
+
+<script>
+    // Le costanti (CLIENT_ID, REDIRECT_URI, SCOPE) ora vengono caricate da config.js
+
+    function getAccessToken() {
+        return localStorage.getItem('youtubeAccessToken');
+    }
+
+    function authenticate() {
+        // Queste costanti sono definite in config.js
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${SCOPE}`;
+        window.location = authUrl;
+    }
+
+    async function getLatestSubscriber() {
+        const accessToken = getAccessToken();
+        if (!accessToken) {
+            document.getElementById('login-prompt').style.display = 'block';
+            document.getElementById('subscriber-info').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('login-prompt').style.display = 'none';
+
+        try {
+            const response = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?part=subscriberSnippet&myRecentSubscribers=true&maxResults=1`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+
+            if (response.status === 401) {
+                localStorage.removeItem('youtubeAccessToken');
+                authenticate();
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.items && data.items.length > 0) {
+                const latestSubscriber = data.items[0].subscriberSnippet;
+                document.getElementById('subscriber-logo').src = latestSubscriber.thumbnails.high.url;
+                document.getElementById('subscriber-name').textContent = latestSubscriber.title;
+                document.getElementById('subscriber-info').style.display = 'flex';
+            }
+        } catch (error) {
+            console.error('Errore nel recuperare l\'ultimo iscritto:', error);
+        }
+    }
+
+    window.onload = function() {
+        const accessToken = getAccessToken();
+        if (!accessToken) {
+            document.getElementById('login-prompt').style.display = 'block';
+        } else {
+            getLatestSubscriber();
+            setInterval(getLatestSubscriber, 10000);
+        }
+    };
+</script>
+
+</body>
+</html>
