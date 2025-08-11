@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autenticazione YouTube</title>
+</head>
+<body>
+    <h1>Autenticazione in corso...</h1>
+    <script>
+        window.onload = function() {
+            if (window.location.hash) {
+                const fragment = new URLSearchParams(window.location.hash.substring(1));
+                const accessToken = fragment.get('access_token');
+                if (accessToken) {
+                    localStorage.setItem('youtubeAccessToken', accessToken);
+                }
+            }
+            window.location.href = 'index.html'; // Reindirizza al widget dopo l'autenticazione
+
+        };
+    </script>
+</body>
+</html>
