@@ -1,0 +1,29 @@
+name: Deploy to GitHub Pages
+
+# Esegue l'azione ogni volta che fai un push sul branch 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Scarica il codice del tuo repository (index.html, auth.html, style.css, etc.)
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      # 2. Crea il file config.js al volo usando i secrets del repository
+      - name: Create config.js from Secrets
+        run: |
+          echo "const CLIENT_ID = '${{ secrets.GOOGLE_CLIENT_ID }}';" > config.js
+          echo "const REDIRECT_URI = 'https:// ${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/auth.html';" >> config.js
+          echo "const SCOPE = 'https://www.googleapis.com/auth/youtube.readonly';" >> config.js
+
+      # 3. Pubblica tutti i file (incluso il nuovo config.js) sul branch gh-pages
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # Il branch dove verranno pubblicati i file
+          folder: . # Pubblica l'intera cartella principale
