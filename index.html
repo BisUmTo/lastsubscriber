@@ -20,6 +20,25 @@
 </div>
 
 <script>
+    // Funzione per applicare il CSS personalizzato
+    let lastCustomCSS = null;
+    function applyCustomCSS() {
+        const savedCSS = localStorage.getItem('customCSS') || '';
+        if (savedCSS !== lastCustomCSS) {
+            let styleTag = document.getElementById('custom-css-style');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'custom-css-style';
+                document.head.appendChild(styleTag);
+            }
+            styleTag.innerHTML = savedCSS;
+            lastCustomCSS = savedCSS;
+        }
+    }
+
+    function getRefreshInterval() {
+        return parseInt(localStorage.getItem('refreshInterval')) || 10;
+    }
     // Le costanti (CLIENT_ID, REDIRECT_URI, SCOPE) ora vengono caricate da config.js
 
     function getAccessToken() {
@@ -70,11 +89,16 @@
 
     window.onload = function() {
         const accessToken = getAccessToken();
+        applyCustomCSS();
+
         if (!accessToken) {
             document.getElementById('login-prompt').style.display = 'block';
         } else {
             getLatestSubscriber();
-            setInterval(getLatestSubscriber, 10000);
+            setInterval(() => {
+                getLatestSubscriber();
+                applyCustomCSS(); // Ricarica il CSS ad ogni ciclo
+            }, getRefreshInterval() * 1000);
         }
     };
 </script>
