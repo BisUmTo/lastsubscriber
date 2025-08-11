@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
+    environment: github-pages
     runs-on: ubuntu-latest
     steps:
       # 1. Scarica il codice del tuo repository (index.html, auth.html, style.css, etc.)
